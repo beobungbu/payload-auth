@@ -439,6 +439,18 @@ const payloadAdapter: PayloadAdapter = ({ payloadClient, adapterConfig }) => {
               })
             })
             result = doc.docs[0]
+            // Fix: Payload bulk update may return empty docs array
+            // Fallback to findOne if result is undefined
+            if (!result && payloadWhere) {
+              debugLog(['updateByWhere-fallback', { collectionSlug, payloadWhere }])
+              const found = await payload.find({
+                collection: collectionSlug,
+                where: payloadWhere,
+                limit: 1,
+                depth: PAYLOAD_QUERY_DEPTH
+              })
+              result = found.docs[0]
+            }
           }
 
           const transformedResult = transformOutput<typeof result | null>({
